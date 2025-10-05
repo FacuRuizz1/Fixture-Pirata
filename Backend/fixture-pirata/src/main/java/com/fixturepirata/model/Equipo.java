@@ -24,4 +24,6 @@ public class Equipo {
 
     @OneToMany(mappedBy = "rival",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Partido> partidosContraBelgrano;
+
+
 }
