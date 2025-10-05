@@ -29,7 +29,7 @@ public class Partido {
     @Enumerated(EnumType.STRING)
     private Resultado resultado;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private Condicion condicion;
 
     @ManyToOne

@@ -25,30 +25,27 @@ public class PartidoServiceImpl implements PartidoService {
 
     @Override
     public PartidoDTO crearPartido(PartidoDTO partidoDTO) {
-        // Buscar el equipo rival por su nombre
-        Equipo rival = equipoRepository.findByNombre(partidoDTO.getRival().getNombre())
+        Equipo rival = equipoRepository.findById(partidoDTO.getRivalId())
                 .orElseThrow(() -> new RuntimeException("Rival no encontrado"));
 
-        // Crear el partido usando el DTO
-        Partido partido = mapToEntity(partidoDTO);
-
-        //Calculo de resultado automaticamente
-        if(partidoDTO.getGolesBelgrano() > partidoDTO.getGolesRival()){
-            partido.setResultado(Resultado.VICTORIA);
-        } else if (partidoDTO.getGolesBelgrano() == partidoDTO.getGolesRival()) {
-            partido.setResultado(Resultado.EMPATE);
-        }
-        else {
-            partido.setResultado(Resultado.DERROTA);
-        }
-
-        //Asignar el equipo rival encontrado
+        Partido partido = new Partido();
+        partido.setFecha(partidoDTO.getFecha());
+        partido.setEstadio(partidoDTO.getEstadio());
+        partido.setGolesBelgrano(partidoDTO.getGolesBelgrano());
+        partido.setGolesRival(partidoDTO.getGolesRival());
+        partido.setCondicion(partidoDTO.getCondicion());
         partido.setRival(rival);
 
-        //Guardar el partido en la bdd
-        Partido partidoGuardado = partidoRepository.save(partido);
+        //  Calcular el resultado automáticamente
+        if (partido.getGolesBelgrano() > partido.getGolesRival()) {
+            partido.setResultado(Resultado.VICTORIA);
+        } else if (partido.getGolesBelgrano() < partido.getGolesRival()) {
+            partido.setResultado(Resultado.DERROTA);
+        } else {
+            partido.setResultado(Resultado.EMPATE);
+        }
 
-        //Retornar el DTO del partido creado
+        Partido partidoGuardado = partidoRepository.save(partido);
         return mapToDTO(partidoGuardado);
     }
 
@@ -77,12 +74,20 @@ public class PartidoServiceImpl implements PartidoService {
         partido.setEstadio(partidoDTO.getEstadio());
         partido.setGolesBelgrano(partidoDTO.getGolesBelgrano());
         partido.setGolesRival(partidoDTO.getGolesRival());
-        partido.setResultado(partidoDTO.getResultado());
         partido.setCondicion(partidoDTO.getCondicion());
 
-        if(partidoDTO.getRival() != null && partidoDTO.getRival().getId() != null){
-            Equipo rival = equipoRepository.findById(partidoDTO.getRival().getId())
-                    .orElseThrow(()-> new RuntimeException("Rival no encontrado con el id: " + partidoDTO.getRival().getId()));
+        // Calcular el resultado automáticamente basado en los goles
+        if (partido.getGolesBelgrano() > partido.getGolesRival()) {
+            partido.setResultado(Resultado.VICTORIA);
+        } else if (partido.getGolesBelgrano() < partido.getGolesRival()) {
+            partido.setResultado(Resultado.DERROTA);
+        } else {
+            partido.setResultado(Resultado.EMPATE);
+        }
+
+        if(partidoDTO.getRivalId() != null){
+            Equipo rival = equipoRepository.findById(partidoDTO.getRivalId())
+                    .orElseThrow(() -> new RuntimeException("Rival no encontrado con el id: " + partidoDTO.getRivalId()));
             partido.setRival(rival);
         }
 
@@ -110,15 +115,7 @@ public class PartidoServiceImpl implements PartidoService {
                 .golesRival(partido.getGolesRival())
                 .resultado(partido.getResultado())
                 .condicion(partido.getCondicion())
-                .rival(
-                        partido.getRival() != null
-                                ? EquipoDTO.builder()
-                                .id(partido.getRival().getId())
-                                .nombre(partido.getRival().getNombre())
-                                .ciudad(partido.getRival().getCiudad())
-                                .build()
-                                : null
-                )
+                .rivalId(partido.getRival() != null ? partido.getRival().getId() : null)
                 .build();
     }
 
@@ -133,4 +130,5 @@ public class PartidoServiceImpl implements PartidoService {
                 .condicion(dto.getCondicion())
                 .build();
     }
+
 }
